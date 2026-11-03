@@ -1,6 +1,20 @@
 "use client";
-import { useEffect, useState, type FormEvent } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type PointerEvent,
+} from "react";
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+} from "motion/react";
 import { z } from "zod";
 import {
   Activity,
@@ -22,158 +36,239 @@ import { PriceChart } from "./price-chart";
 
 export function HeroChart() {
   const reduced = useReducedMotion();
+  const stage = useRef<HTMLDivElement>(null);
+  const inView = useInView(stage, { amount: 0.1 });
+  const pointerX = useMotionValue(0);
+  const pointerY = useMotionValue(0);
+  const smoothX = useSpring(pointerX, {
+    stiffness: 110,
+    damping: 24,
+    mass: 0.7,
+  });
+  const smoothY = useSpring(pointerY, {
+    stiffness: 110,
+    damping: 24,
+    mass: 0.7,
+  });
+  const rotateX = useTransform(smoothY, [-1, 1], [3, -3]);
+  const rotateY = useTransform(smoothX, [-1, 1], [-4, 4]);
+  const x = useTransform(smoothX, [-1, 1], [-6, 6]);
+  const y = useTransform(smoothY, [-1, 1], [-5, 5]);
+  const lightX = useTransform(smoothX, [-1, 1], [10, 90]);
+  const lightY = useTransform(smoothY, [-1, 1], [10, 90]);
+  const glowLeft = useTransform(lightX, (value) => `${value}%`);
+  const glowTop = useTransform(lightY, (value) => `${value}%`);
+  function resetPointer() {
+    pointerX.set(0);
+    pointerY.set(0);
+  }
+  function followPointer(event: PointerEvent<HTMLDivElement>) {
+    if (
+      reduced ||
+      event.pointerType !== "mouse" ||
+      !window.matchMedia("(hover: hover) and (pointer: fine)").matches
+    )
+      return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    pointerX.set(
+      Math.max(
+        -1,
+        Math.min(1, ((event.clientX - bounds.left) / bounds.width) * 2 - 1),
+      ),
+    );
+    pointerY.set(
+      Math.max(
+        -1,
+        Math.min(1, ((event.clientY - bounds.top) / bounds.height) * 2 - 1),
+      ),
+    );
+  }
   return (
-    <div className="hero-chart-scene">
-      <div className="glass candle-card">
-        <div className="candle-heading">
-          <span>
-            <ChartCandlestick size={17} /> XAU / USD
-          </span>
-          <span className="live-badge">
-            <span /> SIMULATED MARKET
-          </span>
-        </div>
-        <div className="candle-value">
-          2,654.32 <span>+0.82%</span>
-        </div>
-        <svg
-          className="candlestick"
-          viewBox="0 0 600 320"
-          role="img"
-          aria-label="Illustrative gold candlestick chart"
-        >
-          <defs>
-            <linearGradient id="candle-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop stopColor="#2bc69c" stopOpacity=".1" />
-              <stop offset="1" stopColor="#2bc69c" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          {[50, 110, 170, 230, 290].map((y) => (
-            <line
-              x1="15"
-              x2="550"
-              y1={y}
-              y2={y}
-              key={y}
-              stroke="#dce3ed"
-              strokeDasharray="3 6"
+    <div
+      ref={stage}
+      className="hero-chart-stage"
+      onPointerMove={followPointer}
+      onPointerLeave={resetPointer}
+      onPointerCancel={resetPointer}
+      data-in-view={inView}
+    >
+      <motion.div
+        className="hero-chart-scene"
+        style={
+          reduced
+            ? undefined
+            : { rotateX, rotateY, x, y, transformPerspective: 1100 }
+        }
+      >
+        <motion.div
+          aria-hidden="true"
+          className="hero-pointer-glow"
+          style={{ left: glowLeft, top: glowTop }}
+        />
+        <div className="glass candle-card">
+          <div className="candle-heading">
+            <span>
+              <ChartCandlestick size={17} /> XAU / USD
+            </span>
+            <span className="live-badge">
+              <span /> SIMULATED MARKET
+            </span>
+          </div>
+          <div className="candle-value">
+            2,654.32 <span>+0.82%</span>
+          </div>
+          <svg
+            className="candlestick"
+            viewBox="0 0 600 320"
+            role="img"
+            aria-label="Illustrative gold candlestick chart"
+          >
+            <defs>
+              <linearGradient id="candle-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop stopColor="#2bc69c" stopOpacity=".1" />
+                <stop offset="1" stopColor="#2bc69c" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {[50, 110, 170, 230, 290].map((y) => (
+              <line
+                x1="15"
+                x2="550"
+                y1={y}
+                y2={y}
+                key={y}
+                stroke="#dce3ed"
+                strokeDasharray="3 6"
+              />
+            ))}
+            <path
+              d="M30 230 L64 260 L98 245 L132 220 L166 256 L200 225 L234 170 L268 200 L302 235 L336 160 L370 100 L404 135 L438 90 L472 50 L506 80 L540 65 L570 95 L570 310 L30 310 Z"
+              fill="url(#candle-fill)"
             />
-          ))}
-          <path
-            d="M30 230 L64 260 L98 245 L132 220 L166 256 L200 225 L234 170 L268 200 L302 235 L336 160 L370 100 L404 135 L438 90 L472 50 L506 80 L540 65 L570 95 L570 310 L30 310 Z"
-            fill="url(#candle-fill)"
-          />
-          <path
-            d="M30 230 L64 260 L98 245 L132 220 L166 256 L200 225 L234 170 L268 200 L302 235 L336 160 L370 100 L404 135 L438 90 L472 50 L506 80 L540 65 L570 95"
-            fill="none"
-            stroke="#86d8c0"
-            strokeWidth="2"
-          />
-          {[
-            210, 245, 225, 199, 240, 202, 140, 170, 204, 132, 75, 98, 56, 25,
-            55, 37, 66,
-          ].map((y, i) => {
-            const green = [2, 3, 5, 6, 9, 10, 12, 13, 15].includes(i);
-            return (
-              <g key={i}>
-                <line
-                  x1={30 + i * 33}
-                  x2={30 + i * 33}
-                  y1={y - 21}
-                  y2={y + 62}
-                  stroke={green ? "#20c699" : "#e56a86"}
-                  strokeWidth="1.7"
-                />
-                <motion.rect
-                  initial={reduced ? false : { scaleY: 0 }}
-                  animate={{ scaleY: 1 }}
-                  transition={{ duration: 0.6, delay: i * 0.035 }}
-                  x={23 + i * 33}
-                  y={y}
-                  width="14"
-                  height={i % 3 === 0 ? 46 : 31}
-                  rx="2"
-                  fill={green ? "#20c699" : "#e56a86"}
-                  style={{ transformOrigin: `${30 + i * 33}px ${y + 30}px` }}
-                />
-              </g>
-            );
-          })}
-          <text x="540" y="44" fontSize="9" fill="#a8b1bf">
-            2,733.82
-          </text>
-          <text x="540" y="164" fontSize="9" fill="#a8b1bf">
-            2,725.11
-          </text>
-          <text x="540" y="284" fontSize="9" fill="#a8b1bf">
-            2,711.32
-          </text>
-        </svg>
-        <div className="chart-bottom-label">
-          <span>09:00</span>
-          <span>11:00</span>
-          <span>13:00</span>
-          <span>15:00</span>
+            <path
+              d="M30 230 L64 260 L98 245 L132 220 L166 256 L200 225 L234 170 L268 200 L302 235 L336 160 L370 100 L404 135 L438 90 L472 50 L506 80 L540 65 L570 95"
+              fill="none"
+              stroke="#86d8c0"
+              strokeWidth="2"
+            />
+            {[
+              210, 245, 225, 199, 240, 202, 140, 170, 204, 132, 75, 98, 56, 25,
+              55, 37, 66,
+            ].map((y, i) => {
+              const green = [2, 3, 5, 6, 9, 10, 12, 13, 15].includes(i);
+              return (
+                <g key={i}>
+                  <line
+                    x1={30 + i * 33}
+                    x2={30 + i * 33}
+                    y1={y - 21}
+                    y2={y + 62}
+                    stroke={green ? "#20c699" : "#e56a86"}
+                    strokeWidth="1.7"
+                  />
+                  <motion.rect
+                    initial={reduced ? false : { scaleY: 0 }}
+                    animate={{ scaleY: 1 }}
+                    transition={{ duration: 0.6, delay: i * 0.035 }}
+                    x={23 + i * 33}
+                    y={y}
+                    width="14"
+                    height={i % 3 === 0 ? 46 : 31}
+                    rx="2"
+                    fill={green ? "#20c699" : "#e56a86"}
+                    style={{ transformOrigin: `${30 + i * 33}px ${y + 30}px` }}
+                  />
+                </g>
+              );
+            })}
+            <text x="540" y="44" fontSize="9" fill="#a8b1bf">
+              2,733.82
+            </text>
+            <text x="540" y="164" fontSize="9" fill="#a8b1bf">
+              2,725.11
+            </text>
+            <text x="540" y="284" fontSize="9" fill="#a8b1bf">
+              2,711.32
+            </text>
+          </svg>
+          <div className="chart-bottom-label">
+            <span>09:00</span>
+            <span>11:00</span>
+            <span>13:00</span>
+            <span>15:00</span>
+          </div>
         </div>
-      </div>
-      <div className="glass floating-quote">
-        <span>XAU/USD</span>
-        <strong>2,742.80</strong>
-        <small>+1.4%</small>
-        <svg viewBox="0 0 90 28">
-          <path
-            d="M2 24L12 19L22 21L32 12L42 16L52 9L62 11L72 7L86 2"
-            fill="none"
-            stroke="#50c9a0"
-            strokeWidth="2.5"
-          />
-        </svg>
-      </div>
-      <div className="glass floating-analysis">
-        <h3>
-          <span className="gradient-icon">
-            <Sparkles size={17} />
-          </span>
-          AI Analysis <span className="scanning">SCANNING</span>
-        </h3>
-        <p>Momentum confirming across timeframes…</p>
-        <div className="confidence-label">
-          <span>Breakout confidence</span>
-          <strong>87.6%</strong>
+        <div className="hero-float-layer quote-layer">
+          <div className="glass floating-quote hero-floating-card">
+            <span>XAU/USD</span>
+            <strong>2,742.80</strong>
+            <small>+1.4%</small>
+            <svg viewBox="0 0 90 28">
+              <path
+                d="M2 24L12 19L22 21L32 12L42 16L52 9L62 11L72 7L86 2"
+                fill="none"
+                stroke="#50c9a0"
+                strokeWidth="2.5"
+              />
+            </svg>
+          </div>
         </div>
-        <div className="bar-track">
-          <span style={{ width: "87.6%" }} />
-        </div>
-        <div className="analysis-bars">
-          {[13, 24, 8, 15, 9, 7, 17, 11, 20, 14].map((h, i) => (
-            <i style={{ height: h }} key={i} />
-          ))}
-        </div>
-      </div>
-      <div className="glass floating-broker">
-        <span className="field-label">
-          BEST BROKER MATCH <strong>★ 4.9</strong>
-        </span>
-        {[
-          { name: "Aurum Markets", score: 92, detail: "1.2p gold · min $50" },
-          { name: "Nordic Trade", score: 84, detail: "0.8p FX · min $100" },
-        ].map((b) => (
-          <div key={b.name}>
-            <div>
-              <strong>{b.name}</strong>
-              <span>{b.score}%</span>
+        <div className="hero-float-layer analysis-layer">
+          <div className="glass floating-analysis hero-floating-card">
+            <h3>
+              <span className="gradient-icon">
+                <Sparkles size={17} />
+              </span>
+              AI Analysis <span className="scanning">SCANNING</span>
+            </h3>
+            <p>Momentum confirming across timeframes…</p>
+            <div className="confidence-label">
+              <span>Breakout confidence</span>
+              <strong>87.6%</strong>
             </div>
-            <small>{b.detail}</small>
             <div className="bar-track">
-              <span style={{ width: `${b.score}%` }} />
+              <span style={{ width: "87.6%" }} />
+            </div>
+            <div className="analysis-bars">
+              {[13, 24, 8, 15, 9, 7, 17, 11, 20, 14].map((h, i) => (
+                <i
+                  style={{ height: h, animationDelay: `${i * -0.17}s` }}
+                  key={i}
+                />
+              ))}
             </div>
           </div>
-        ))}
-        <a href="#brokers">
-          Full comparison
-          <ArrowRight size={14} />
-        </a>
-      </div>
+        </div>
+        <div className="hero-float-layer broker-layer">
+          <div className="glass floating-broker hero-floating-card">
+            <span className="field-label">
+              BEST BROKER MATCH <strong>★ 4.9</strong>
+            </span>
+            {[
+              {
+                name: "Aurum Markets",
+                score: 92,
+                detail: "1.2p gold · min $50",
+              },
+              { name: "Nordic Trade", score: 84, detail: "0.8p FX · min $100" },
+            ].map((b) => (
+              <div key={b.name}>
+                <div>
+                  <strong>{b.name}</strong>
+                  <span>{b.score}%</span>
+                </div>
+                <small>{b.detail}</small>
+                <div className="bar-track">
+                  <span style={{ width: `${b.score}%` }} />
+                </div>
+              </div>
+            ))}
+            <a href="#brokers">
+              Full comparison
+              <ArrowRight size={14} />
+            </a>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

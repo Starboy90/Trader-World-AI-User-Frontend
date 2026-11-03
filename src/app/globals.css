@@ -4983,3 +4983,118 @@ a svg {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Depth follows a mouse pointer; touch users keep a steady, readable chart. */
+.hero-chart-stage {
+  position: relative;
+  isolation: isolate;
+}
+.hero-chart-scene {
+  transform-style: preserve-3d;
+}
+.hero-pointer-glow {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #a6e9ee38,
+    #bfa2f20c 50%,
+    transparent 72%
+  );
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: -1;
+}
+.hero-float-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+.quote-layer {
+  transform: translateZ(55px);
+}
+.analysis-layer {
+  transform: translateZ(70px);
+}
+.broker-layer {
+  transform: translateZ(42px);
+}
+.hero-floating-card {
+  pointer-events: auto;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .hero-floating-card {
+    animation: hero-card-drift 7s ease-in-out infinite;
+  }
+  .floating-analysis.hero-floating-card {
+    animation-delay: -2.2s;
+    animation-duration: 8s;
+  }
+  .floating-broker.hero-floating-card {
+    animation-delay: -4.3s;
+    animation-duration: 9s;
+  }
+  .hero-chart-scene .analysis-bars i {
+    transform-origin: bottom;
+    animation: hero-scan-bars 2.2s ease-in-out infinite;
+  }
+  .hero-chart-scene .live-badge > span {
+    animation: hero-market-pulse 2.8s ease-in-out infinite;
+  }
+  .hero-chart-stage[data-in-view="false"] .hero-floating-card,
+  .hero-chart-stage[data-in-view="false"] .analysis-bars i,
+  .hero-chart-stage[data-in-view="false"] .live-badge > span {
+    animation-play-state: paused;
+  }
+}
+@keyframes hero-card-drift {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -7px;
+  }
+}
+@keyframes hero-scan-bars {
+  0%,
+  100% {
+    scale: 1 1;
+    opacity: 0.8;
+  }
+  50% {
+    scale: 1 0.45;
+    opacity: 1;
+  }
+}
+@keyframes hero-market-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 #35cba030;
+  }
+  60% {
+    box-shadow: 0 0 0 4px #35cba000;
+  }
+}
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .hero-float-layer {
+    transform: none;
+  }
+  .hero-pointer-glow {
+    display: none;
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .hero-chart-stage:hover .hero-floating-card,
+  .hero-chart-stage:focus-within .hero-floating-card {
+    animation-play-state: paused;
+  }
+}
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .hero-chart-scene {
+    transform: none !important;
+  }
+}

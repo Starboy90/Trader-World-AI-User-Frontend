@@ -19,3 +19,5 @@ The initial build caught Next.js Cache Components rejecting `new Date()` during 
 The backend-dependent features listed in the README are demonstrations. No live AI, authentication, market-data, billing, trade-execution, email-delivery, or alert-notification integration was tested or claimed.
 
 The source archive is checked using ZIP CRC validation and a required-file inventory. It excludes dependencies, generated build outputs, private reference recordings, QA scratch files, Git metadata, and environment files.
+
+Hero motion update: targeted browser checks verify mouse tilt, neutral return on pointer leave, floating cards, scanning bars, the broker comparison link, reduced-motion behavior (including changes at runtime), and a steady touch layout.

@@ -1,6 +1,6 @@
 # Trader World AI — User Frontend
 
-A responsive Next.js App Router frontend recreated from the supplied 92-second reference recording. The design uses white translucent cards, a lavender-to-cyan canvas, locally hosted Geist typography, gradient controls, and Motion animations.
+A responsive Next.js App Router frontend recreated from the supplied 92-second reference recording. The design uses white translucent cards, a lavender-to-cyan canvas, locally hosted Geist typography, gradient controls, and Motion animations. The hero chart follows mouse movement with a spring-based 3D tilt and layered floating cards; movement pauses for card interaction and respects touch and reduced-motion preferences.
 
 ## Run
 
